@@ -1,0 +1,14 @@
+{
+    "name": "kindle-to-markdown-parser",
+    "version": "0.1.0",
+    "description": "A simple Kindle notes parser to Markdown.",
+    "main": "parser.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "Paolo Conizzoli",
+    "license": "ISC",
+    "dependencies": {
+        "minimist": "^1.2.5"
+    }
+}
