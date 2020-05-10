@@ -1,12 +1,14 @@
 const fs = require('fs');
 const util = require('util');
 const minimist = require('minimist');
+const { mdToPdf } = require('md-to-pdf');
 
 // Promisify core API's
 const writeFile = util.promisify(fs.writeFile);
 const readFile = util.promisify(fs.readFile);
 
 const arguments = minimist(process.argv.slice(2))['_'];
+let   format    = minimist(process.argv.slice(2))['format'];
 
 // If the command is parse but no file has been provided
 if (arguments.length === 0 || (arguments[0] === 'parse' && arguments.length <= 1)) {
@@ -17,11 +19,14 @@ if (arguments.length === 0 || (arguments[0] === 'parse' && arguments.length <= 1
 if (arguments.length === 0 || (arguments[0] === 'parse' && arguments.length <= 1) || arguments[0] === 'help') {
     console.log(`A simple Kindle notes parser to Markdown.
 
-Usage: parser.js <command> <clipping path>
+Usage: parser.js <command> <option> </option><clipping path>
     
 Commands:
-    help  Show the help message
-    parse Perform the file parsing
+    help            Show the help message
+    parse           Perform the file parsing
+    
+Options:
+    --format=pdf    Generate PDF files instead of MarkDown
 `);
     return;
 }
@@ -78,7 +83,7 @@ const parseNotes = (fileContent) => {
     return parsedNotes;
 }
 
-const writeBookNotes = (bookNotes) => {
+const writeBookNotes = async (bookNotes) => {
     let fileContent = '';
 
     // For each note create a section inside the book file
@@ -96,9 +101,20 @@ const writeBookNotes = (bookNotes) => {
         return;
     }
 
-    fileContent = '# ' + bookNotes[0].title + ' - ' + bookNotes[0].author + '\r\n' + fileContent;
+    fileContent    = '# ' + bookNotes[0].title + ' - ' + bookNotes[0].author + '\r\n' + fileContent;
+    const filePath = fileFolder + '/Kindle Notes Export/' + bookNotes[0].title + ' - ' + bookNotes[0].author;
 
-    writeFile(fileFolder + '/Kindle Notes Export/' + bookNotes[0].title + ' - ' + bookNotes[0].author + '.md', fileContent);
+    switch (format) {
+        case 'pdf':
+            const pdf = await mdToPdf({ content: fileContent }).catch(console.error);
+
+            if (pdf) {
+                fs.writeFileSync(`${filePath}.pdf`, pdf.content);
+            }
+            break;
+        default:
+            fs.writeFileSync(`${filePath}.md`, fileContent);
+    }
 }
 
 return readFile(filePath, 'utf8').then(mainFileData => {
